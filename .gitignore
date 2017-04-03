@@ -6,6 +6,10 @@ __pycache__/
 # C extensions
 *.so
 
+#debby setting
+debby_data_server/settings.env
+debby_data_server/migrations/
+
 # Distribution / packaging
 .Python
 env/
