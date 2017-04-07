@@ -24,29 +24,29 @@ class CustomUserModelList(APIView):
 
 class SpecificCustomUserModel(APIView):
     """
-    Retrieve, update or delete a CustomUserModel instance.
+    Retrieve, update or delete a CustomUserModel instance by line_id.
     """
-    def get_object(self, pk):
+    def get_object_by_line_id(self, line_id):
         try:
-            return CustomUserModel.objects.get(pk=pk)
+            return CustomUserModel.objects.get(line_id=line_id)
         except CustomUserModel.DoesNotExist:
             raise Http404
 
-    def get(self, request, pk, format=None):
-        customuser = self.get_object(pk)
+    def get(self, request, line_id, format=None):
+        customuser = self.get_object_by_line_id(line_id)
         serializer = CustomUserModelSerializer(customuser)
         return Response(serializer.data)
 
-    def put(self, request, pk, format=None):
-        customuser = self.get_object(pk)
+    def put(self, request, line_id, format=None):
+        customuser = self.get_object_by_line_id(line_id)
         serializer = CustomUserModelSerializer(customuser, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def delete(self, request, pk, format=None):
-        customuser = self.get_object(pk)
+    def delete(self, request, line_id, format=None):
+        customuser = self.get_object_by_line_id(line_id)
         customuser.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -71,8 +71,8 @@ class SpecificUserBGModelList(APIView):
     """
     List all BModels of certain user by user__id
     """
-    def get(self, request,pk, format=None):
-        bgmodels = BGModel.objects.all().filter(user__line_id = pk)
+    def get(self, request,line_id, format=None):
+        bgmodels = BGModel.objects.all().filter(user__line_id = line_id)
         serializer = BGModelSerializer(bgmodels, many=True)
         return Response(serializer.data)
 
