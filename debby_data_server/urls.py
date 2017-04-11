@@ -8,12 +8,18 @@ from debby_data_server import views
 urlpatterns = [
 
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    url(r'^users/$', views.CustomUserModelList.as_view()),
-    url(r'^users/(?P<pk>[0-9]+)/$', views.SpecificCustomUserModel.as_view()),
-    url(r'^bgmodels/$', views.AllBGModelList.as_view()),
-    url(r'^bgmodels/user/(?P<pk>[0-9]+)/$', views.SpecificUserBGModelList.as_view()),
-    url(r'^bgmodels/bgmodel/(?P<pk>[0-9]+)/$', views.SpecificBGModel.as_view()),
 
+    #post: create a user
+    url(r'^api/v1/user/$', views.CustomUserModelView.as_view()),
 
+    #post: get bgmodels of a user
+    url(r'^api/v1/user/bgmodels/$', views.CustomUserBGModelView.as_view()),
 
+    #post: create a bgmodel by line_id,line_token, and a bgmodel
+    #put: update a bgmodel
+    url(r'^api/v1/bgmodel/$', views.BGModelView.as_view()),
+
+    #post: create a food model
+    #put: update a food model
+    url(r'^api/v1/foodmodel/$', views.FoodModelView.as_view()),
 ]

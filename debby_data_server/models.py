@@ -7,39 +7,9 @@ from django.db import models
 import datetime
 
 
-
-
 # Custom user model for line.
 # example from https://www.caktusgroup.com/blog/2013/08/07/migrating-custom-user-model-django/
-'''
-class CustomUserManager(BaseUserManager):
-    def _create_user(self, line_id, password, **extra_fields):
-        """
-        Creates and saves a User with the given email and password.
-        """
-        if not line_id:
-            raise ValueError('no line_id was given. failed to create user.')
-        user = self.model(line_id=line_id, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
 
-    def create_user(self, line_id=None, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        return self._create_user(line_id, password, **extra_fields)
-
-    def create_superuser(self, line_id, password, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-
-        return self._create_user(line_id, password, **extra_fields)
-'''
 
 class CustomUserModel(models.Model):
     username_validator = None
@@ -60,7 +30,7 @@ class CustomUserModel(models.Model):
     def __str__(self):
         return self.line_id
 
-'''
+
 class UserSettingModel(models.Model):
     user = models.ForeignKey(CustomUserModel)
     unit = models.CharField(max_length=10,
@@ -83,28 +53,6 @@ class UserSettingModel(models.Model):
     weight = models.FloatField()
 
 
-class UserLogManger(models.Manager):
-    """
-    handling the logging of conversation between user and debby.
-    """
-
-    def save_to_log(self, line_id, input_text, send_message):
-        if isinstance(send_message, TextSendMessage):
-            log = self.model(
-                user=CustomUserModel.objects.get(line_id=line_id),
-                request_text=input_text,
-                response=send_message.text,
-            )
-            log.save()
-        elif isinstance(send_message, TemplateSendMessage):
-            log = self.model(
-                user=CustomUserModel.objects.get(line_id=line_id),
-                request_text=input_text,
-                response=send_message.alt_text,
-            )
-            log.save()
-
-
 
 class UserLogModel(models.Model):
     user = models.ForeignKey(CustomUserModel)
@@ -113,9 +61,8 @@ class UserLogModel(models.Model):
     response = models.CharField(max_length=50,
                                 verbose_name=('Response from debby.'))
     time = models.DateTimeField(auto_now_add=True)
+    #objects = UserLogManger()
 
-    objects = UserLogManger()
-'''
 
 class BGModel(models.Model):
     user = models.ForeignKey(CustomUserModel)
@@ -131,3 +78,12 @@ class BGModel(models.Model):
 
     def __str__(self):
         return self.user.line_id
+
+class FoodModel(models.Model):
+    user = models.ForeignKey(CustomUserModel)
+    calories = models.IntegerField(null=True, blank=True)
+    gi_value = models.IntegerField(null=True, blank=True)
+    food_name = models.CharField(max_length=50)
+    food_image_upload = models.ImageField(upload_to='FoodRecord')
+    note = models.CharField(max_length=200)
+    time = models.DateTimeField(auto_now_add=True)
