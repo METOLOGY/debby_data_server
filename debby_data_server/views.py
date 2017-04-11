@@ -1,4 +1,4 @@
-from debby_data_server.models import CustomUserModel,BGModel
+from debby_data_server.models import CustomUserModel,BGModel,FoodModel
 from debby_data_server.serializers import CustomUserModelSerializer,BGModelSerializer
 from django.http import Http404
 from rest_framework.views import APIView
@@ -13,7 +13,7 @@ class CustomUserModelView(APIView):
         customUserModels = CustomUserModel.objects.all()
         serializer = CustomUserModelSerializer(customUserModels, many=True)
         return Response(serializer.data)
-        
+
     '''
     post: create a new user, request must have line_id and line_token
     request example:
@@ -100,7 +100,7 @@ class BGModelView(APIView):
 
         if serializer.is_valid():
             serializer.create(line_id,line_token)
-            response = {"line_id":line_id ,"bgmodels": serializer.data}
+            response = {"line_id":line_id ,"bgmodel": serializer.data}
             return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -137,4 +137,25 @@ class BGModelView(APIView):
         if serializer.is_valid():
             serializer.update(id,time,glucose_val)
             return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class FoodModelView(APIView):
+
+    def post(self, request, format=None):
+        foodmodel = request.data['foodmodel']
+        serializer = FoodModelSerializer(data=foodmodel)
+        line_id = request.data['line_id']
+        line_token = request.data['line_token']
+
+
+        user = CustomUserModel.objects.filter(line_id = line_id, line_token = line_token)
+
+        if not user:  #user model does not exist -> bad request
+            response = {"message":"user does not exist or wrong token"}
+            return Response(response,status=status.HTTP_400_BAD_REQUEST)
+
+        if serializer.is_valid():
+            serializer.create(line_id,line_token)
+            response = {"line_id":line_id ,"foodmodel": serializer.data}
+            return Response(response, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

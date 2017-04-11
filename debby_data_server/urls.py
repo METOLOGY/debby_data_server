@@ -19,4 +19,7 @@ urlpatterns = [
     #put: update a bgmodel
     url(r'^api/v1/bgmodel/$', views.BGModelView.as_view()),
 
+    #post: create a food model
+    #put: update a food model
+    url(r'^api/v1/foodmodel/$', views.FoodModelView.as_view()),
 ]
