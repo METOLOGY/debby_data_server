@@ -62,8 +62,8 @@ THIRD_PARTY_APPS = [
 ]
 
 BUILD_APPS = [
-    'debby_data_server',
-
+    #'debby_data_server',
+    'debby_data_server.apps.DebbyDataServerConfig',
 ]
 
 REST_FRAMEWORK = {
@@ -164,7 +164,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Custom user model
-#AUTH_USER_MODEL = 'user.CustomUserModel'
+AUTH_USER_MODEL = 'debby_data_server.CustomUserModel'
 
 # CROS settings.
 CORS_ORIGIN_WHITELIST = (

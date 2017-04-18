@@ -2,4 +2,4 @@ from django.apps import AppConfig
 
 
 class DebbyDataServerConfig(AppConfig):
-    name = 'debbydataserver'
+    name = 'debby_data_server'
