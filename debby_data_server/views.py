@@ -2,10 +2,11 @@ from debby_data_server.models import CustomUserModel,BGModel,FoodModel
 from debby_data_server.serializers import CustomUserModelSerializer,BGModelSerializer
 from django.http import Http404
 from rest_framework.views import APIView
+from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework import status
 
-
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 class CustomUserModelView(APIView):
     #for debug use: get all users
@@ -30,6 +31,8 @@ class CustomUserModelView(APIView):
 
 
 class CustomUserBGModelView(APIView):
+
+
     '''
     post: get all bgmodels of a user, or get first num_of_latest bgmodels(ordered by time) of a user
     request body must have line_id and line_token, num_of_latest is optional
@@ -44,12 +47,15 @@ class CustomUserBGModelView(APIView):
         line_id = request.data['line_id']
         line_token = request.data['line_token']
         num_of_latest = request.data.get('num_of_latest',None) #if num_of_latest == 2, this API get 2 latest bgmodels
+        page_num = request.data.get('page_num',1)
+        page_size = request.data.get('page_size',5)
+
         #use line_id and line_token to query user model table
         user = CustomUserModel.objects.filter(line_id = line_id, line_token = line_token)
 
         #user model does not exist -> bad request
         if not user:
-            response = {"message":"user does not exist or wrong token"}
+            response = {"error":"user does not exist or wrong token"}
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
         else:     #user model exist -> query bgmodel
             if not num_of_latest:
@@ -59,8 +65,33 @@ class CustomUserBGModelView(APIView):
                 retrive_num = num_of_latest if num_of_latest < len(bgmodels) else len(bgmodels)
                 bgmodels = bgmodels[:retrive_num]
 
+            paginator = Paginator(bgmodels, page_size)
+            try:
+                bgmodels = paginator.page(page_num)
+            except PageNotAnInteger:
+                # If page is not an integer, deliver first page.
+                response = {"error":"page_num is not an integer"}
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+            except EmptyPage:
+                # If page is out of range (e.g. 9999), deliver last page of results.
+                response = {"error":"page_num is out of range"}
+                return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
             serializer = BGModelSerializer(bgmodels, many=True)
-            response = {"line_id":line_id,"bgmodels": serializer.data}
+
+            if paginator.num_pages == 1:
+                response = {"line_id":line_id,"bgmodels": serializer.data}
+            else: #>1
+                if page_num ==1 :
+                    response = {"next_page": (page_num+1) }
+                elif page_num == paginator.num_pages: #last page
+                    response = {"previous_page":(page_num-1)}
+                else:
+                    response = {"next_page": (page_num+1) ,"previous_page":(page_num-1)}
+            response['num_pages'] = paginator.num_pages
+            response['page_size'] = page_size
+            response['line_id'] = line_id
+            response['bgmodels'] = serializer.data
             return Response(response)
 
 
@@ -95,7 +126,7 @@ class BGModelView(APIView):
         user = CustomUserModel.objects.filter(line_id = line_id, line_token = line_token)
 
         if not user:  #user model does not exist -> bad request
-            response = {"message":"user does not exist or wrong token"}
+            response = {"error":"user does not exist or wrong token"}
             return Response(response,status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
@@ -131,13 +162,28 @@ class BGModelView(APIView):
 
         user = CustomUserModel.objects.filter(line_id = line_id, line_token = line_token)
         if not user:  #user model does not exist -> bad request
-            response = {"message":"user does not exist or wrong token"}
+            response = {"error":"user does not exist or wrong token"}
             return Response(response,status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():
             serializer.update(id,time,glucose_val)
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    '''
+    delete: delete a bgmodel - request parameter must have id of bgmodel
+    request parameter: "id"
+    '''
+    def delete(self, request, id,format=None):
+
+        bgmodel = BGModel.objects.filter(id=id)
+        if bgmodel.exists():
+            bgmodel.delete()
+            return Response( status=status.HTTP_200_OK)
+        else:
+            return Response( {"error":"id does not exist"},status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class FoodModelView(APIView):
 
@@ -151,7 +197,7 @@ class FoodModelView(APIView):
         user = CustomUserModel.objects.filter(line_id = line_id, line_token = line_token)
 
         if not user:  #user model does not exist -> bad request
-            response = {"message":"user does not exist or wrong token"}
+            response = {"error":"user does not exist or wrong token"}
             return Response(response,status=status.HTTP_400_BAD_REQUEST)
 
         if serializer.is_valid():

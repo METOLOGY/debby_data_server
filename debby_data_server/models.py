@@ -11,7 +11,7 @@ import datetime
 # example from https://www.caktusgroup.com/blog/2013/08/07/migrating-custom-user-model-django/
 
 
-class CustomUserModel(models.Model):
+class CustomUserModel(models.Model): #todo:
     username_validator = None
     username = None
 
